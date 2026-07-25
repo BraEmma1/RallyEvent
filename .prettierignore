@@ -1,0 +1,8 @@
+node_modules
+dist
+dev-dist
+build
+coverage
+package-lock.json
+*.svg
+docs/Rally_MVP_Prototype.html

@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rally — MVP Prototype v2</title>
+<style>
+  :root{
+    --navy:#1F3864; --navy2:#2c4a7a; --accent:#F4A21E; --green:#2E7D32; --wa:#25D366;
+    --bg:#eef1f5; --card:#fff; --line:#e2e6ec; --grey:#6b7280; --greyl:#9aa2af;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(135deg,#dfe4ec,#c9d2de);min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;padding:24px 12px;color:#1a1f29}
+  .lead{max-width:400px;text-align:center;margin:0 0 18px}
+  .lead h1{margin:0 0 4px;color:var(--navy);font-size:20px}
+  .lead p{margin:0;color:var(--grey);font-size:13px;line-height:1.45}
+  .tag{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:8px;letter-spacing:.3px}
+
+  .phone{width:400px;max-width:100%;height:820px;background:#000;border-radius:44px;padding:12px;box-shadow:0 24px 60px rgba(20,30,60,.35);position:relative}
+  .screenwrap{background:var(--bg);border-radius:33px;height:100%;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:130px;height:26px;background:#000;border-radius:0 0 16px 16px;z-index:40}
+  .statusbar{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:12px;font-weight:600;color:#111;flex:0 0 auto}
+  .apphead{background:var(--navy);color:#fff;padding:12px 18px 14px;flex:0 0 auto;display:flex;align-items:center;gap:10px}
+  .apphead .logo{font-weight:800;font-size:18px;letter-spacing:.5px}
+  .apphead .logo span{color:var(--accent)}
+  .apphead .sub{font-size:11px;opacity:.8;margin-left:auto;text-align:right;line-height:1.3}
+
+  .screen{flex:1 1 auto;overflow-y:auto;padding:16px 16px 88px;display:none}
+  .screen.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .screen.nopad{padding-bottom:16px}
+
+  h2.title{margin:2px 0 2px;font-size:20px;color:var(--navy)}
+  p.muted{color:var(--grey);font-size:13px;margin:0 0 14px;line-height:1.5}
+  label{display:block;font-size:12px;font-weight:600;color:#374151;margin:12px 0 5px}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font-size:14px;font-family:inherit;background:#fff;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--navy)}
+  textarea{resize:none;min-height:70px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .chip{border:1.5px solid var(--line);background:#fff;color:#374151;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:20px;cursor:pointer;user-select:none;transition:.15s}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .btn{display:block;width:100%;border:none;background:var(--accent);color:#3a2600;font-weight:800;font-size:15px;padding:14px;border-radius:13px;cursor:pointer;margin-top:20px;box-shadow:0 6px 16px rgba(244,162,30,.35)}
+  .btn.navy{background:var(--navy);color:#fff;box-shadow:0 6px 16px rgba(31,56,100,.3)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy);box-shadow:none}
+  .btn.wa{background:var(--wa);color:#053d1c;box-shadow:0 6px 16px rgba(37,211,102,.35)}
+  .btn.sm{padding:11px;font-size:13px;margin-top:12px}
+  .btn:active{transform:translateY(1px)}
+  .toplink{text-align:center;font-size:13px;color:var(--navy);font-weight:700;margin-top:16px;cursor:pointer}
+
+  /* entry / login */
+  .entrywrap{padding:26px 20px;display:flex;flex-direction:column;height:100%;justify-content:center}
+  .evbadge{background:#eaf0f9;border:1px solid #cdd9ee;border-radius:14px;padding:14px;text-align:center;margin-bottom:18px}
+  .evbadge .e1{font-size:12px;color:var(--grey);font-weight:600}
+  .evbadge .e2{font-size:19px;color:var(--navy);font-weight:800;margin-top:2px}
+  .seg{display:flex;background:#e7ebf1;border-radius:12px;padding:4px;margin-bottom:10px}
+  .seg button{flex:1;border:none;background:transparent;padding:9px;border-radius:9px;font-weight:700;font-size:13px;color:var(--grey);cursor:pointer}
+  .seg button.on{background:#fff;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .otpwrap{display:flex;gap:8px;justify-content:center;margin:14px 0}
+  .otpwrap input{width:42px;height:52px;text-align:center;font-size:22px;font-weight:800;padding:0}
+  .prefillnote{background:#eaf3ea;border:1px solid #bfe0bf;border-radius:12px;padding:11px 13px;font-size:12px;color:#1f6b2c;margin-bottom:4px;display:flex;gap:8px;align-items:flex-start}
+
+  /* profile card */
+  .pcard{background:var(--card);border-radius:18px;padding:20px;text-align:center;box-shadow:0 8px 24px rgba(30,40,70,.08);border:1px solid var(--line)}
+  .avatar{width:78px;height:78px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;font-size:30px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .pname{font-size:20px;font-weight:800;color:#111;margin:0}
+  .prole{font-size:13px;color:var(--grey);margin:3px 0 2px}
+  .pco{font-size:13px;color:var(--navy);font-weight:600}
+  .looking{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:14px 0 4px}
+  .lk{background:#eaf3ea;color:var(--green);font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:14px}
+  .links{display:flex;gap:10px;justify-content:center;margin-top:14px}
+  .lbtn{flex:1;padding:10px;border-radius:11px;font-size:12px;font-weight:700;border:1px solid var(--line);background:#fff;color:#374151;text-align:center}
+  .qrbox{background:#fff;border-radius:18px;padding:22px;text-align:center;box-shadow:0 8px 24px rgba(30,40,70,.08);border:1px solid var(--line)}
+  canvas.qr{image-rendering:pixelated;border-radius:8px}
+
+  /* scan */
+  .scanline{position:relative;width:220px;height:220px;margin:6px auto 0;border-radius:16px;overflow:hidden;background:#0d1526;border:2px solid var(--navy);cursor:pointer}
+  .scanframe{position:absolute;inset:24px;border:2px solid var(--accent);border-radius:12px}
+  .laser{position:absolute;left:24px;right:24px;height:2px;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:scan 2s ease-in-out infinite}
+  @keyframes scan{0%,100%{top:26px}50%{top:190px}}
+  .match{background:linear-gradient(135deg,#eaf3ea,#dff0df);border:1px solid #bfe0bf;border-radius:16px;padding:18px;text-align:center;margin-top:8px}
+  .match .who{font-size:16px;font-weight:800;color:var(--green)}
+
+  /* meet / discover */
+  .goalrow{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:12.5px;color:#374151;margin-bottom:12px}
+  .goalrow b{color:var(--navy)}
+  .mcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;display:flex;gap:12px;align-items:flex-start;margin-bottom:11px}
+  .mcard .av{width:44px;height:44px;border-radius:50%;flex:0 0 auto;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:16px;background:linear-gradient(135deg,var(--navy),var(--navy2))}
+  .mcard .meta{flex:1;min-width:0}
+  .mcard .cn{font-weight:700;font-size:14.5px;margin:0}
+  .mcard .cr{font-size:12px;color:var(--grey);margin:1px 0 0}
+  .why{font-size:11.5px;color:#1f6b2c;background:#eaf3ea;border-radius:9px;padding:6px 9px;margin-top:7px;font-weight:600}
+  .mscore{font-size:11px;font-weight:800;color:var(--accent);white-space:nowrap}
+
+  /* list */
+  .conn{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;display:flex;gap:12px;align-items:flex-start;margin-bottom:11px}
+  .conn .av{width:44px;height:44px;border-radius:50%;flex:0 0 auto;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .conn .meta{flex:1;min-width:0}
+  .conn .cn{font-weight:700;font-size:14.5px;margin:0}
+  .conn .cr{font-size:12px;color:var(--grey);margin:1px 0 0}
+  .conn .intent{display:inline-block;font-size:10.5px;font-weight:800;color:var(--navy);background:#eef2f8;border-radius:10px;padding:3px 8px;margin-top:6px}
+  .conn .note{font-size:12px;color:#374151;background:#f5f7fa;border-radius:9px;padding:7px 9px;margin-top:7px;border-left:3px solid var(--accent)}
+  .conn .addnote{font-size:12px;color:var(--navy);font-weight:700;margin-top:7px;cursor:pointer;display:inline-block}
+  .badgeday{font-size:10.5px;color:var(--greyl);white-space:nowrap}
+  .wachip{display:inline-flex;align-items:center;gap:5px;background:var(--wa);color:#053d1c;font-size:11.5px;font-weight:800;padding:6px 11px;border-radius:16px;margin-top:8px;cursor:pointer;border:none}
+  .wachip.done{background:#e7f6ed;color:#128a3e}
+  .hotdot{font-size:11px;font-weight:800;color:#c0392b;margin-left:6px}
+
+  /* organizer */
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+  .stat .n{font-size:24px;font-weight:800;color:var(--navy)}
+  .stat .l{font-size:11px;color:var(--grey);margin-top:2px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .bar{display:flex;align-items:center;gap:8px;margin:8px 0}
+  .bar .bn{font-size:12px;width:88px;color:#374151;font-weight:600}
+  .bar .track{flex:1;height:9px;background:#eef1f5;border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;background:var(--accent);border-radius:6px}
+  .bar .bv{font-size:11px;color:var(--grey);width:30px;text-align:right}
+  .sectlabel{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 8px}
+  .relabel{background:#fff5e6;border:1px solid #f4d9a8;border-radius:10px;padding:8px 11px;font-size:11.5px;color:#8a5a10;margin-bottom:10px}
+
+  /* nudge */
+  .nudge{background:linear-gradient(135deg,#1F3864,#2c4a7a);color:#fff;border-radius:16px;padding:16px;margin-bottom:14px}
+  .nudge .nt{font-size:13px;font-weight:800;margin:0 0 8px;display:flex;align-items:center;gap:6px}
+  .nudge .nrow{display:flex;gap:8px;margin-bottom:10px}
+  .nudge .nb{flex:1;background:rgba(255,255,255,.12);border-radius:11px;padding:9px;text-align:center}
+  .nudge .nb b{font-size:19px;display:block}
+  .nudge .nb span{font-size:10px;opacity:.85}
+  .nudge .nbtn{background:var(--accent);color:#3a2600;border:none;font-weight:800;font-size:12.5px;padding:10px;border-radius:11px;width:100%;cursor:pointer}
+  .nudge .push{font-size:11px;opacity:.85;margin:0 0 10px;line-height:1.4}
+
+  .tabbar{position:absolute;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--line);display:flex;z-index:30;border-radius:0 0 33px 33px;padding-bottom:6px}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--greyl);cursor:pointer;font-weight:600}
+  .tab.on{color:var(--navy)}
+  .tab .ic{width:22px;height:22px}
+  .tabbar.hidden{display:none}
+
+  .modal{position:absolute;inset:0;background:rgba(10,16,30,.5);z-index:50;display:none;align-items:flex-end;border-radius:33px}
+  .modal.open{display:flex}
+  .sheet{background:#fff;width:100%;border-radius:20px 20px 33px 33px;padding:20px 18px 30px;animation:up .25s ease}
+  @keyframes up{from{transform:translateY(60px)}to{transform:none}}
+  .sheet h3{margin:2px 0 4px;color:var(--navy)}
+
+  .flowbar{display:flex;gap:6px;max-width:400px;margin:14px auto 0;flex-wrap:wrap;justify-content:center}
+  .flowbar button{border:1px solid #c4cdda;background:#fff;color:var(--navy);font-size:11px;font-weight:700;padding:6px 10px;border-radius:16px;cursor:pointer}
+  .flowbar button:active{background:var(--navy);color:#fff}
+  .stepnote{max-width:400px;font-size:12px;color:var(--grey);margin-top:14px;text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+  <div class="lead">
+    <span class="tag">CLICKABLE PROTOTYPE v2 · working name “Rally”</span>
+    <h1>Relationship intelligence for events</h1>
+    <p>Now with phone-or-email login, returning-user sign-in, pre-fill from the organizer’s registration, connection intent, and a “people you should meet” directory.</p>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screenwrap">
+      <div class="statusbar"><span>9:41</span><span>Rally · GEF 2026</span></div>
+      <div class="apphead">
+        <div class="logo">Ral<span>ly</span></div>
+        <div class="sub" id="headsub">GEF 2026<br>Accra</div>
+      </div>
+
+      <!-- ENTRY / LOGIN -->
+      <div class="screen active nopad" id="s-entry">
+        <div class="entrywrap">
+          <div class="evbadge"><div class="e1">You’re joining</div><div class="e2">GEF 2026 · Accra</div></div>
+          <div class="prefillnote">✅ <span>Your name, phone &amp; email were passed from GEF’s registration form — you won’t retype them.</span></div>
+          <div class="seg" style="margin-top:14px">
+            <button class="on" id="seg-phone" onclick="segSel('phone')">Phone</button>
+            <button id="seg-email" onclick="segSel('email')">Email</button>
+          </div>
+          <input id="entry-id" value="+233 55 000 0000" />
+          <button class="btn" onclick="go('s-otp')">Continue →</button>
+          <div class="toplink" onclick="loginReturning()">Already have a Rally account? Log in</div>
+        </div>
+      </div>
+
+      <!-- OTP -->
+      <div class="screen nopad" id="s-otp">
+        <div class="entrywrap">
+          <h2 class="title" style="text-align:center">Enter the code</h2>
+          <p class="muted" style="text-align:center">We sent a 6-digit code to your <span id="otp-channel">WhatsApp</span>.</p>
+          <div class="otpwrap">
+            <input value="4"><input value="8"><input value="2"><input value="1"><input value="0"><input value="6">
+          </div>
+          <button class="btn" id="otp-btn" onclick="verifyOtp()">Verify →</button>
+          <p class="muted" style="text-align:center;margin-top:14px">Verified once — next event, you just log in.</p>
+        </div>
+      </div>
+
+      <!-- ONBOARD (new user, pre-filled) -->
+      <div class="screen" id="s-onboard">
+        <h2 class="title">Complete your profile</h2>
+        <div class="prefillnote" style="margin:6px 0 4px">✅ <span>Imported from your GEF 2026 registration. Just confirm and add what you’re looking for.</span></div>
+        <label>Full name</label><input id="f-name" value="Emmanuel Osei" />
+        <label>Job title</label><input id="f-role" value="Founder & Partnerships Lead" />
+        <label>Company</label><input id="f-co" value="Ditechted" />
+        <label>Email</label><input id="f-email" value="emmanuel@ditechted.com" />
+        <label>Phone (WhatsApp)</label><input id="f-wa" value="+233 55 000 0000" />
+        <label>What are you looking for at GEF 2026? (tap all)</label>
+        <div class="chips" id="lookchips">
+          <span class="chip on">Partnerships</span><span class="chip on">Investment</span>
+          <span class="chip">Customers</span><span class="chip">Talent</span><span class="chip">Media</span>
+        </div>
+        <p class="muted" style="margin-top:10px;font-size:11.5px">Your name &amp; company stay the same across every event — but goals reset per event.</p>
+        <button class="btn" onclick="go('s-profile')">Create my card →</button>
+      </div>
+
+      <!-- WELCOME BACK (returning user) -->
+      <div class="screen nopad" id="s-welcome">
+        <div class="entrywrap" style="text-align:center">
+          <div class="avatar" style="width:88px;height:88px;font-size:34px">EO</div>
+          <h2 class="title">Welcome back, Emmanuel 👋</h2>
+          <p class="muted">Your Rally profile is ready. This is your 3rd event with us.</p>
+          <div class="goalrow" style="text-align:left"><b>Before you re-enter:</b> what are you looking for at <b>GEF 2026</b> specifically? (Your goals reset per event.)</div>
+          <div class="chips" style="justify-content:center">
+            <span class="chip on">Partnerships</span><span class="chip">Investment</span><span class="chip on">Talent</span>
+          </div>
+          <button class="btn" onclick="go('s-profile')">Enter GEF 2026 →</button>
+        </div>
+      </div>
+
+      <!-- PROFILE + QR -->
+      <div class="screen" id="s-profile">
+        <div class="pcard">
+          <div class="avatar" id="pv-init">EO</div>
+          <p class="pname" id="pv-name">Emmanuel Osei</p>
+          <p class="prole" id="pv-role">Founder & Partnerships Lead</p>
+          <p class="pco" id="pv-co">Ditechted</p>
+          <div class="looking" id="pv-look"><span class="lk">✓ Partnerships</span><span class="lk">✓ Investment</span></div>
+          <div class="links"><div class="lbtn">WhatsApp</div><div class="lbtn">LinkedIn</div><div class="lbtn">Email</div></div>
+        </div>
+        <div class="qrbox" style="margin-top:14px">
+          <canvas class="qr" id="qr" width="180" height="180"></canvas>
+          <p class="muted" style="margin:12px 0 0">Show this to anyone you meet — they scan it to save you instantly.</p>
+        </div>
+        <button class="btn navy" onclick="go('s-scan')">Scan someone’s code →</button>
+      </div>
+
+      <!-- MEET / DISCOVER -->
+      <div class="screen" id="s-meet">
+        <h2 class="title">People you should meet</h2>
+        <p class="muted">Matched to your goals for GEF 2026 — no guessing who’s in the room.</p>
+        <div class="goalrow">Your goals: <b>Partnerships</b> · <b>Investment</b> — here’s who fits.</div>
+        <div id="meetlist"></div>
+        <p class="muted" style="font-size:11px;margin-top:8px">MVP: rules-based match on stated goals. V2: AI matchmaking that learns from behaviour across events.</p>
+      </div>
+
+      <!-- SCAN -->
+      <div class="screen" id="s-scan">
+        <h2 class="title">Scan to connect</h2>
+        <p class="muted">Point at another attendee’s QR. (Tap the frame to simulate.)</p>
+        <div class="scanline" onclick="doScan()"><div class="scanframe"></div><div class="laser"></div></div>
+        <div id="scanresult"></div>
+        <button class="btn ghost" onclick="go('s-profile')" style="margin-top:22px">← Back to my card</button>
+      </div>
+
+      <!-- INTENT + NOTE -->
+      <div class="screen" id="s-note">
+        <h2 class="title">Why did you connect?</h2>
+        <p class="muted">One tap. This is what turns a contact into a qualified lead — and what sponsors pay for.</p>
+        <div class="chips" id="intentchips">
+          <span class="chip" onclick="pickIntent(this,'Partnership')">Partnership</span>
+          <span class="chip" onclick="pickIntent(this,'Customer inquiry')">Customer inquiry</span>
+          <span class="chip" onclick="pickIntent(this,'Investment')">Investment</span>
+          <span class="chip" onclick="pickIntent(this,'Talent / hiring')">Talent / hiring</span>
+          <span class="chip" onclick="pickIntent(this,'General networking')">General networking</span>
+        </div>
+        <label style="margin-top:16px">Add a private note about <b id="note-who">this person</b></label>
+        <div class="chips" style="margin-bottom:6px">
+          <span class="chip" onclick="quick(this)">Send proposal</span>
+          <span class="chip" onclick="quick(this)">Follow up next week</span>
+          <span class="chip" onclick="quick(this)">Hot lead 🔥</span>
+        </div>
+        <textarea id="notetext" placeholder="e.g. Interested in a sponsorship discussion for Q4. Send deck by Friday."></textarea>
+        <button class="btn wa" onclick="saveAndWhatsApp()">Save &amp; message on WhatsApp</button>
+        <button class="btn ghost sm" onclick="saveNote()">Just save</button>
+      </div>
+
+      <!-- CONNECTIONS -->
+      <div class="screen" id="s-list">
+        <h2 class="title">My connections</h2>
+        <p class="muted"><span id="conn-count">3</span> met at GEF 2026 · your mini-CRM
+          &nbsp;·&nbsp;<a href="javascript:void(0)" onclick="toggleEventOver()" style="color:var(--navy);font-weight:700">preview post-event ›</a></p>
+        <div id="nudgeslot"></div>
+        <div id="connlist"></div>
+      </div>
+
+      <!-- ORGANIZER -->
+      <div class="screen" id="s-org">
+        <h2 class="title">GEF 2026</h2>
+        <div class="relabel">📊 Positioned as <b>Event Relationship Intelligence</b> — not “event analytics” (per Freda). We measure relationships formed, not tickets sold.</div>
+        <div class="grid2">
+          <div class="stat"><div class="n">1,842</div><div class="l">Registered</div></div>
+          <div class="stat"><div class="n">1,516</div><div class="l">Profiles completed</div></div>
+          <div class="stat"><div class="n">6,204</div><div class="l">Connections made</div></div>
+          <div class="stat"><div class="n">82%</div><div class="l">Completion</div></div>
+        </div>
+        <div class="sectlabel">Why people connected <span style="color:var(--accent)">· intent</span></div>
+        <div class="bar"><span class="bn">Partnership</span><div class="track"><div class="fill" style="width:74%"></div></div><span class="bv">34%</span></div>
+        <div class="bar"><span class="bn">Investment</span><div class="track"><div class="fill" style="width:52%"></div></div><span class="bv">24%</span></div>
+        <div class="bar"><span class="bn">Customer</span><div class="track"><div class="fill" style="width:44%"></div></div><span class="bv">20%</span></div>
+        <div class="bar"><span class="bn">Talent</span><div class="track"><div class="fill" style="width:30%"></div></div><span class="bv">14%</span></div>
+        <div class="sectlabel">Sponsor lead capture <span style="color:var(--accent)">· paid</span></div>
+        <div class="conn">
+          <div class="av" style="background:linear-gradient(135deg,#F4A21E,#d98600)">V</div>
+          <div class="meta"><p class="cn">Visa (Gold Sponsor)</p><p class="cr">148 interactions · 37 high-quality leads</p>
+          <div class="note">Auto ROI report · 23 follow-up opportunities · intent-scored</div></div>
+        </div>
+        <div class="conn">
+          <div class="av" style="background:linear-gradient(135deg,#F4A21E,#d98600)">M</div>
+          <div class="meta"><p class="cn">MTN (Booth 12)</p><p class="cr">96 interactions · 31 booked meetings</p>
+          <div class="note">Top intent: Partnership (41%)</div></div>
+        </div>
+      </div>
+
+      <!-- tabbar -->
+      <div class="tabbar" id="tabbar">
+        <div class="tab" data-s="s-profile" onclick="tab(this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>My Card</div>
+        <div class="tab" data-s="s-meet" onclick="tab(this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Meet</div>
+        <div class="tab" data-s="s-scan" onclick="tab(this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 20h.01M20 14h.01M14 20h.01"/></svg>Scan</div>
+        <div class="tab" data-s="s-list" onclick="tab(this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="3.5" cy="18" r="1.5"/></svg>Contacts</div>
+        <div class="tab" data-s="s-org" onclick="tab(this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Organizer</div>
+      </div>
+      <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+    </div>
+  </div>
+
+  <div class="flowbar">
+    <button onclick="resetTo('s-entry')">1 · Entry/Login</button>
+    <button onclick="resetTo('s-otp')">2 · OTP</button>
+    <button onclick="resetTo('s-onboard')">3 · Profile (new)</button>
+    <button onclick="resetTo('s-welcome')">3b · Returning</button>
+    <button onclick="showApp('s-profile')">4 · Card</button>
+    <button onclick="showApp('s-meet')">5 · Meet</button>
+    <button onclick="showApp('s-scan')">6 · Scan→Intent</button>
+    <button onclick="showApp('s-list')">7 · Contacts</button>
+    <button onclick="showApp('s-org')">8 · Organizer</button>
+  </div>
+  <p class="stepnote">Full journey: organizer registration pre-fills your details → verify once (phone or email) → complete profile (goals per event) → see who to meet → scan → tag intent → follow up on WhatsApp. Returning attendees skip straight to “welcome back”.</p>
+
+<script>
+  var lookState=["Partnerships","Investment"];
+  var idMode="phone";
+  var pendingIntent=null, pending=null, eventOver=false;
+
+  var meetPeople=[
+    {n:"Sarah Mensah",r:"Partnerships Lead · Visa",init:"SM",why:"Offers Partnerships — you want Partnerships",score:"98%"},
+    {n:"Kwame Boateng",r:"Partner · Ashanti Capital",init:"KB",why:"Actively investing — you want Investment",score:"95%"},
+    {n:"David Owusu",r:"Head of Ecosystem · Mastercard",init:"DO",why:"Seeking fintech partners — you want Partnerships",score:"91%"},
+    {n:"Ama Darko",r:"Angel Investor",init:"AD",why:"Backs early founders — you want Investment",score:"88%"}
+  ];
+  var connections=[
+    {n:"Freda Astanga",r:"Partnerships Mgr · GEF",init:"FA",day:"10:20",note:"Wants a demo.",wa:1,done:true,intent:"Partnership"},
+    {n:"Sarah Mensah",r:"Lead, Payments · Visa",init:"SM",day:"11:05",note:"Sponsorship for Q4. Send deck Friday. 🔥",wa:1,done:false,intent:"Partnership"},
+    {n:"Kwame Boateng",r:"Investor · Ashanti Capital",init:"KB",day:"13:40",note:"",wa:1,done:false,intent:"Investment"}
+  ];
+
+  function setTab(id){document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.s===id)});}
+  function go(id){
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+    var el=document.getElementById(id);el.classList.add('active');
+    var appScreens=['s-profile','s-meet','s-scan','s-note','s-list','s-org'];
+    document.getElementById('tabbar').classList.toggle('hidden',appScreens.indexOf(id)<0);
+    setTab(id);
+    if(id==='s-profile'){syncProfile();drawQR();}
+    if(id==='s-meet'){renderMeet();}
+    if(id==='s-list'){renderList();}
+    el.scrollTop=0;
+  }
+  function tab(el){go(el.dataset.s);}
+  function resetTo(id){go(id);}
+  function showApp(id){go(id);}
+
+  function segSel(m){idMode=m;
+    document.getElementById('seg-phone').classList.toggle('on',m==='phone');
+    document.getElementById('seg-email').classList.toggle('on',m==='email');
+    document.getElementById('entry-id').value = m==='phone' ? "+233 55 000 0000" : "emmanuel@ditechted.com";
+  }
+  function verifyOtp(){ go('s-onboard'); }
+  function loginReturning(){ go('s-otp'); document.getElementById('otp-btn').setAttribute('onclick','goWelcome()'); }
+  function goWelcome(){ document.getElementById('otp-btn').setAttribute('onclick','verifyOtp()'); go('s-welcome'); }
+  // OTP channel label
+  document.getElementById('s-entry').addEventListener('click',function(){
+    document.getElementById('otp-channel').textContent = idMode==='phone' ? 'WhatsApp' : 'email';
+  });
+
+  document.querySelectorAll('#lookchips .chip').forEach(function(c){
+    c.onclick=function(){c.classList.toggle('on');var t=c.textContent;
+      if(c.classList.contains('on')){if(lookState.indexOf(t)<0)lookState.push(t);}
+      else{lookState=lookState.filter(function(x){return x!==t});}};
+  });
+
+  function syncProfile(){
+    var name=(document.getElementById('f-name')||{}).value||"Emmanuel Osei";
+    document.getElementById('pv-name').textContent=name;
+    document.getElementById('pv-role').textContent=(document.getElementById('f-role')||{}).value||"";
+    document.getElementById('pv-co').textContent=(document.getElementById('f-co')||{}).value||"";
+    var p=name.trim().split(' ');document.getElementById('pv-init').textContent=((p[0]?p[0][0]:'')+(p[1]?p[1][0]:'')).toUpperCase();
+    var lk=document.getElementById('pv-look');lk.innerHTML='';
+    lookState.forEach(function(x){var s=document.createElement('span');s.className='lk';s.textContent='✓ '+x;lk.appendChild(s);});
+  }
+
+  function drawQR(){
+    var c=document.getElementById('qr');if(!c)return;var ctx=c.getContext('2d');
+    var N=25,cell=c.width/N;ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#1F3864';
+    var s=7;function rnd(){s=(s*9301+49297)%233280;return s/233280;}
+    for(var y=0;y<N;y++)for(var x=0;x<N;x++){if(rnd()>0.5)ctx.fillRect(x*cell,y*cell,cell,cell);}
+    function fnd(ox,oy){ctx.fillStyle='#fff';ctx.fillRect(ox*cell,oy*cell,7*cell,7*cell);ctx.fillStyle='#1F3864';
+      ctx.fillRect(ox*cell,oy*cell,7*cell,cell);ctx.fillRect(ox*cell,(oy+6)*cell,7*cell,cell);
+      ctx.fillRect(ox*cell,oy*cell,cell,7*cell);ctx.fillRect((ox+6)*cell,oy*cell,cell,7*cell);
+      ctx.fillRect((ox+2)*cell,(oy+2)*cell,3*cell,3*cell);}
+    fnd(0,0);fnd(N-7,0);fnd(0,N-7);
+  }
+
+  function renderMeet(){
+    var w=document.getElementById('meetlist');w.innerHTML='';
+    meetPeople.forEach(function(m){
+      var d=document.createElement('div');d.className='mcard';
+      d.innerHTML='<div class="av">'+m.init+'</div><div class="meta"><p class="cn">'+m.n+'</p><p class="cr">'+m.r+'</p>'
+        +'<div class="why">🎯 '+m.why+'</div></div><span class="mscore">'+m.score+'</span>';
+      w.appendChild(d);
+    });
+  }
+
+  function doScan(){
+    document.getElementById('scanresult').innerHTML='<div class="match"><div class="who">✓ Connected with Sarah Mensah</div>'
+      +'<div style="font-size:12.5px;color:#2E7D32;margin-top:3px">Lead, Payments · Visa</div></div>';
+    pending={n:"Sarah Mensah",r:"Lead, Payments · Visa",init:"SM",day:"Just now",note:"",wa:1,done:false,intent:null};
+    pendingIntent=null;
+    setTimeout(function(){document.getElementById('note-who').textContent="Sarah Mensah";
+      document.querySelectorAll('#intentchips .chip').forEach(function(c){c.classList.remove('on')});go('s-note');},900);
+  }
+  function pickIntent(el,val){document.querySelectorAll('#intentchips .chip').forEach(function(c){c.classList.remove('on')});el.classList.add('on');pendingIntent=val;}
+  function quick(el){var t=document.getElementById('notetext');t.value=(t.value?t.value+' ':'')+el.textContent+'.';}
+  function saveNote(){if(pending){pending.note=document.getElementById('notetext').value;pending.intent=pendingIntent||'General networking';connections.unshift(pending);pending=null;}document.getElementById('notetext').value='';go('s-list');}
+  function saveAndWhatsApp(){if(pending){pending.note=document.getElementById('notetext').value;pending.intent=pendingIntent||'General networking';pending.done=true;connections.unshift(pending);pending=null;}document.getElementById('notetext').value='';go('s-list');setTimeout(function(){waSim("Sarah Mensah");},250);}
+  function waFollow(i){connections[i].done=true;waSim(connections[i].n);renderList();}
+  function waSim(name){alert("Opening WhatsApp…\n\nTo: "+name+"\n\n“Hi "+name.split(' ')[0]+", great meeting you at GEF 2026! Following up as promised — free for a quick call this week?”\n\n(Live app opens WhatsApp with this pre-filled.)");}
+  function isHot(n){return n&&n.indexOf('🔥')>-1;}
+
+  function renderNudge(){
+    var slot=document.getElementById('nudgeslot');
+    if(!eventOver){slot.innerHTML='';return;}
+    var total=connections.length,done=connections.filter(function(c){return c.done;}).length,hot=connections.filter(function(c){return isHot(c.note);}).length;
+    slot.innerHTML='<div class="nudge"><p class="push">🔔 Push · 2 days after GEF 2026</p>'
+      +'<p class="nt">👋 You met '+total+' people. Don’t let them go cold.</p>'
+      +'<div class="nrow"><div class="nb"><b>'+total+'</b><span>met</span></div>'
+      +'<div class="nb"><b>'+done+'</b><span>followed up</span></div>'
+      +'<div class="nb"><b>'+hot+'</b><span>🔥 hot</span></div></div>'
+      +'<button class="nbtn" onclick="waSim(\'Sarah Mensah\')">Message your '+hot+' hot lead now →</button></div>';
+  }
+  function renderList(){
+    renderNudge();
+    document.getElementById('conn-count').textContent=connections.length;
+    var wrap=document.getElementById('connlist');wrap.innerHTML='';
+    connections.forEach(function(c,i){
+      var d=document.createElement('div');d.className='conn';
+      var hot=isHot(c.note)?'<span class="hotdot">🔥 HOT</span>':'';
+      var intent=c.intent?'<span class="intent">'+c.intent+'</span> ':'';
+      var wabtn=c.done?'<span class="wachip done">✓ Followed up</span>':'<span class="wachip" onclick="waFollow('+i+')">Follow up on WhatsApp</span>';
+      d.innerHTML='<div class="av">'+c.init+'</div><div class="meta"><p class="cn">'+c.n+hot+'</p><p class="cr">'+c.r+'</p>'
+        +intent+(c.note?'<div class="note">'+c.note+'</div>':'<span class="addnote" onclick="openNote('+i+')">+ Add a note</span>')
+        +'<br>'+wabtn+'</div><span class="badgeday">'+c.day+'</span>';
+      wrap.appendChild(d);
+    });
+  }
+  function openNote(i){var m=document.getElementById('modal'),s=document.getElementById('sheet');
+    s.innerHTML='<h3>Note · '+connections[i].n+'</h3><textarea id="mnote" placeholder="What to remember?"></textarea>'
+      +'<button class="btn" onclick="commitNote('+i+')">Save</button><button class="btn ghost sm" onclick="closeModal()">Cancel</button>';
+    m.classList.add('open');}
+  function commitNote(i){connections[i].note=document.getElementById('mnote').value||'(note added)';closeModal();renderList();}
+  function closeModal(){document.getElementById('modal').classList.remove('open');}
+  function toggleEventOver(){eventOver=!eventOver;renderList();}
+
+  drawQR();
+</script>
+</body>
+</html>
