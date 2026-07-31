@@ -7,12 +7,26 @@ import dotenv from 'dotenv';
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(here, '../../../.env') });
 
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+
 /**
- * Server-side operational config only. Secrets (Supabase keys, JWT/HMAC
- * secrets) are read where they are used — never bundled toward the browser.
+ * Server-side config. Secrets stay here on the server and are never bundled
+ * toward the browser (only VITE_* reaches the web client).
  */
 export const env = {
-  nodeEnv: process.env.NODE_ENV ?? 'development',
+  nodeEnv,
+  isProd: nodeEnv === 'production',
   port: Number(process.env.PORT ?? 4000),
   webOrigin: process.env.APP_BASE_URL ?? 'http://localhost:5173',
+
+  databaseUrl: process.env.DATABASE_URL ?? '',
+
+  supabaseUrl: process.env.SUPABASE_URL ?? '',
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
+
+  jwt: {
+    secret: process.env.JWT_SECRET ?? '',
+    accessTtl: process.env.JWT_ACCESS_TTL ?? '15m',
+    refreshTtl: process.env.JWT_REFRESH_TTL ?? '30d',
+  },
 };
